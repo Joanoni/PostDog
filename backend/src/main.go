@@ -2,14 +2,21 @@ package main
 
 import (
 	"errors"
+	"net/http"
 
 	"github.com/Joanoni/inutil"
 )
 
 type ExecuteInput struct {
-	Method  string `json:"method"`
-	Url     string `json:"url"`
-	Payload any    `json:"payload"`
+	Method  string   `json:"method"`
+	Url     string   `json:"url"`
+	Header  []Header `json:"header"`
+	Payload any      `json:"payload"`
+}
+
+type Header struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }
 
 type ExecuteOutput struct {
@@ -84,31 +91,40 @@ func errorHandler(c *inutil.Context) {
 }
 
 func executeHandler(c *inutil.Context) {
-	var body ExecuteInput
+	var input ExecuteInput
 
-	err := c.Body(&body)
+	err := c.Body(&input)
 	if c.HandleError(err) {
 		return
 	}
 
-	inutil.LogDebug(body)
+	inutil.LogDebug(input)
+
+	headers := http.Header{}
+
+	for _, header := range input.Header {
+		inutil.LogDebug(header)
+		headers.Set(header.Name, header.Value)
+	}
 
 	var resp inutil.Return[inutil.RequestReponse[*any]]
 
-	if body.Payload == nil {
+	if input.Payload == nil {
 		resp = inutil.Request[any](inutil.RequestInput{
-			Method:  body.Method,
-			Url:     body.Url,
+			Method:  input.Method,
+			Url:     input.Url,
 			Payload: nil,
+			Header:  headers,
 		}, c)
 	} else {
 		resp = inutil.Request[any](inutil.RequestInput{
-			Method: body.Method,
-			Url:    body.Url,
+			Method: input.Method,
+			Url:    input.Url,
 			Payload: &inutil.RequestPayloadInput{
-				Body:        body.Payload,
+				Body:        input.Payload,
 				ContentType: inutil.ApplicationJSON,
 			},
+			Header: headers,
 		}, c)
 	}
 

@@ -9,23 +9,22 @@
             </InputGroup>
         </div>
         <div class="divider-vertical"></div>
-        <InputGroup>
+        <div v-bind:class="getHeadersTableClass()">
             <div v-for="header of headers" :key="header.id">
                 <InputGroup>
-                    <InputText placeholder="Name" :value="header.name" class="col-5" />
-                    <InputText placeholder="Value" :value="header.value" class="col-5" />
+                    <InputText placeholder="Name" v-model="header.name" class="col-5" />
+                    <InputText placeholder="Value" v-model="header.value" class="col-5" />
                     <InputGroupAddon class=" col-2">
                         <div class="flex flex-row">
-                            <Checkbox v-model="header.active" :inputId="header.id" :binary="true" class="mr-1" />
+                            <Checkbox v-model="header.active" :binary="true" class="mr-1" />
                             <div class="flex align-items-center">
                                 <label :for="header.id">Active</label>
                             </div>
-
                         </div>
                     </InputGroupAddon>
                 </InputGroup>
             </div>
-        </InputGroup>
+        </div>
         <div class="divider-vertical"></div>
         <FloatLabel>
             <Textarea v-model="inputBody" rows="15" style="width: 100%;" />
@@ -52,19 +51,13 @@ import Backend from '../../service/Backend';
 export default {
     data() {
         return {
-            response: { jsonData: null, statusCode: null },
+            response: { jsonData: "Empty", statusCode: "null" },
             inputBody: "",
             headers: [
                 {
-                    id: 0,
-                    name: "Authentication",
-                    value: "jwt",
-                    active: true,
-                },
-                {
-                    id: 0,
-                    name: "Authentication",
-                    value: "jwt",
+                    id: "0",
+                    name: "casd",
+                    value: "",
                     active: true,
                 },
             ],
@@ -79,6 +72,26 @@ export default {
             ]
         };
     },
+    watch: {
+        selectedMethod() {
+            console.log(this.selectedMethod)
+        },
+        headers: {
+            handler(newValue, oldValue) {
+                if (this.headers[this.headers.length - 1].name != "") {
+                    this.headers.push(
+                        {
+                            id: this.headers.length.toString(),
+                            name: "",
+                            value: "",
+                            active: true,
+                        },)
+
+                }
+            },
+            deep: true,
+        },
+    },
     mounted() {
         document.body.addEventListener('keydown', (event) => {
             if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
@@ -87,10 +100,16 @@ export default {
         });
     },
     methods: {
+        getHeadersTableClass() {
+            if (this.headers.length > 1) {
+                return 'headers-table'
+            }
+        },
         sendRequest() {
             console.log("method: " + this.selectedMethod.name)
             console.log("url: " + this.url)
             console.log("inputBody: " + this.inputBody)
+            console.log("headers: " + JSON.stringify(this.headers))
             let inputParsed = null
             if (this.inputBody != "" && this.inputBody != null && this.inputBody != undefined) {
                 inputParsed = JSON.parse(this.inputBody)
@@ -108,5 +127,29 @@ export default {
 <style>
 .divider-vertical {
     height: 20px;
+}
+
+.headers-table>div:first-child>div>input:first-child {
+    border-radius: 5px 0px 0px 0px;
+}
+
+.headers-table>div:not(:first-child):not(:last-child)>div>input:first-child {
+    border-radius: 0px 0px 0px 0px;
+}
+
+.headers-table>div:last-child>div>input:first-child {
+    border-radius: 0px 0px 0px 5px;
+}
+
+.headers-table>div:first-child>div>div:last-child {
+    border-radius: 0px 5px 0px 0px;
+}
+
+.headers-table>div:not(:first-child):not(:last-child)>div>div:last-child {
+    border-radius: 0px 0px 0px 0px;
+}
+
+.headers-table>div:last-child>div>div:last-child {
+    border-radius: 0px 0px 5px 0px;
 }
 </style>
